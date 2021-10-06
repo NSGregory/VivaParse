@@ -1,7 +1,6 @@
 """Module for taking data from an excel sheet and processing it into useful pandas dataFrames"""
 
 import pandas as pd
-import csv
 
 class dataReader:
 
