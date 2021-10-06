@@ -36,17 +36,20 @@ class Parser:
         return filtered_data_frame
 
     def count_by_personnel(self, PTA=False):
+        """Parses data for each individual in the lab.  The lab personnel included in this function is defined by
+        the config.ini. """
         individual_column = ' RP Name '
         room_column = ' Room '
-        for individual in self.personnel:
+        # self.personnel comes from config.ini
+        for individual in self.personnel: #selects only the rows in the dataframe associated with an individual
             individual_filtered_result = self.column_filter(individual_column, individual)
             rooms_occupied = np.unique(individual_filtered_result[room_column])
             print(f"{individual} has {len(individual_filtered_result)} cages.")
             print("  Located in:")
-            for room in rooms_occupied:
+            for room in rooms_occupied: #for a given room, counts the occurences to determine num. cages in each room
                 room_filtered_result = self.column_filter(room_column, room, individual_filtered_result)
                 print(f"\t {room}: {len(room_filtered_result)}")
-            if PTA == True:
+            if PTA == True: #for a given billing entry, counts the occurence to determine where funding comes from
                 pta_list = self.pta_assigned_to_lab_personnel(frame=individual_filtered_result)
                 collated_data = self.collate_pta_entries(pta_list, verbose=False)
                 print("  Paid for by:")
@@ -93,7 +96,12 @@ class Parser:
         return filtered_data_frame
 
     def flatten_pta(self, frame=None):
-        """Returns the unique account PTAs regardless of shared PTA and percentage of each assignment"""
+        """Returns the unique account PTAs regardless of shared PTA and percentage of each assignment.  This list
+        is likely to contain redundant values.
+
+        self.collate_pta_entries method can be used to pool the redundant values
+
+        e.g., 'ABC(30), CDE(70)' is simply the reverse order of 'CDE(70), ABC(30)' and thus is redundant"""
         #allows for no frame to be specified, if so, uses the original dataframe
         #otherwise, use the dataframe provided when called
         noneType = type(None)
@@ -121,6 +129,8 @@ class Parser:
         return item[:item.find('(')]
 
     def pta_assigned_to_lab_personnel(self, frame=None):
+        """Compares the given dataframe against the list of lab members and for each unique string in the PTA column
+        returns both the PTA name and the number of occurences of that string in the given dataframe's PTA column."""
         #allows for no frame to be specified, if so, uses the original dataframe
         #otherwise, use the dataframe provided when called
         noneType = type(None)
@@ -141,6 +151,17 @@ class Parser:
         return list_of_counts
 
     def collate_pta_entries(self, pta_list, verbose=True):
+        """PTA entries can contain multiple accounts.  Within an entry, the order of the accounts listed can vary.
+           This function collapses entries with equivalent values but different names into a single value.
+
+           For example take the entries:
+           abc(30), cde(70): 10 animals
+           cde(70), abc(30): 15 animals
+
+           This function will return
+           abc(30), cde(70): 25 animals
+
+           requires self.clean_pta_name"""
         collating_dict = {}
 
         for entry in pta_list:
@@ -159,6 +180,15 @@ class Parser:
         return collating_dict
 
     def clean_pta_name(self,name):
+        """Some entries for the PTA will include multiple accounts.  All entries are a string.
+        If there are multiple entries, these will be separated by a comma (',').
+        If a comma is present, this functions assume there are multiple accounts listed and will separated the string
+        and remove any white space.  To prevent redundant entries, the values are sorted before being returned.
+
+        In this case, 'ABC(30), CDE(70)' would be redundant with 'CDE(70), ABC(30)' and each input string would return
+        'ABC(30), CDE(70);.
+
+        If there is no comma, the function assumes the input is a single entry and simply returns the value."""
         if name.__contains__(','):
             sublist = name.split(',')
             whitespace_cleaned_list = [ x.strip() for x in sublist]
@@ -170,6 +200,7 @@ class Parser:
             return name
 
     def show_pta_info(self):
+        """Shorthand method for displaying the PTA info"""
         return self.collate_pta_entries(self.pta_assigned_to_lab_personnel())
 
 
