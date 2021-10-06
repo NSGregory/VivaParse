@@ -20,7 +20,17 @@ class Config:
             protocols = ast.literal_eval(parser.get('Lab', 'protocols'))
             return personnel, protocols
         else:
-            print("Config file not found")
+            try:
+                # explicitly define the filepath for when it is made into an executable
+                bundle_dir = os.path.dirname(os.path.abspath(__file__))
+                full_path = bundle_dir+"/"+filename
+                parser = ConfigParser()
+                parser.read(full_path)
+                personnel = ast.literal_eval(parser.get('Lab', 'personnel'))
+                protocols = ast.literal_eval(parser.get('Lab', 'protocols'))
+                return personnel, protocols
+            except:
+                print("Config file not found")
 
 
 

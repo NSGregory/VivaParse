@@ -22,5 +22,5 @@ if __name__ == '__main__':
     #options = Options()
     #opts, args = options.parse(sys.argv[1:])
     parser = VivaParse()
-    parser.output.locate_genotype()
-    parser.output.count_by_personnel()
+    parser.output.show_pta_info()
+    parser.output.count_by_personnel(PTA=True)
