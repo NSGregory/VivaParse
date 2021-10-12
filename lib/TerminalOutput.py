@@ -16,7 +16,7 @@ class TablePrinter():
         """ person -> [rooms(dict), PTA(dict)
         Desired output is a series of strings
         name, 'room1\nroom2\nroomn', 'pta1\nptan'
-        Placed in an iterable format (likely list) """
+        Returns a list of lists.  Sublists are in the format of [Name, renderable_room_string, renderable_PTA_string"""
         renderable_personnel_data = []
         #personnel data is a dict
         for person in personnel_data.keys():
@@ -30,6 +30,7 @@ class TablePrinter():
         return renderable_personnel_data
 
     def print_personnel_table(self, personnel_data):
+        """Takes an iterable containing strings that are renderable within the Rich library and prints a table."""
         table = Table(title="[bold red1]Individual Animal Use[/]", box=box.HEAVY_HEAD, show_lines=True, expand=True)
         table.add_column("[bold cyan1]Name[/]", justify='center', style ='bold green')
         table.add_column("[bold cyan1]Rooms[/]", justify="center", style='bold green')
@@ -45,6 +46,8 @@ class TablePrinter():
 
 
     def dict_to_renderable(self, dict):
+        """Converts a dict to a string renderable by the rich library.  Assumes that the key of each dict is a label
+        and the entry for that key is data you want printed with that key-as-label."""
         renderable_string =''
         for key in dict:
             renderable_string += f"{key}: {dict[key]}\n"
@@ -52,21 +55,27 @@ class TablePrinter():
 
 
 if __name__ =='__main__':
+    # more legible feedback using the rich library
     from rich.traceback import install
     install(show_locals=True)
+
+    #import project specific libraries
     from gui import selectFile
     from data_reader import dataReader
     from parse_wkbk import Parser
+
+    #pick the files; in this specific case we know two files are needed
     file = selectFile.byGui()
     file2 = selectFile.byGui()
-    #data = dataReader(file)
-    data2 = dataReader([file,file2])
-    #parser = Parser(data)
-    parser2 = Parser(data2)
-    #filtered = parser.filter_by_list('personnel')
-    #filtered2 = parser2.filter_by_list('personnel')
-    #parser.count_by_personnel()
-    personnel = parser2.count_by_personnel(PTA=True) #a dict of dicts
-    total = parser2.show_pta_info() #a dict of dicts
+
+    #take the data from the excel sheets and combine them into a pandas dataframe
+    data = dataReader([file,file2])
+
+    #parse through the pandas dataframe to get pertinent information
+    parser = Parser(data)
+    personnel = parser.count_by_personnel(PTA=True) #a dict of dicts
+    total = parser.show_pta_info() #a dict of dicts
+
+    #format the parsed data into a neat terminal rendering
     tp = TablePrinter()
     tp.print_personnel_table(personnel)
