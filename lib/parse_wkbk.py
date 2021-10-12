@@ -5,7 +5,7 @@
 
 from configs import Config
 from data_reader import dataReader
-import numpy as np
+from numpy import unique as np_unique
 
 class Parser:
 
@@ -41,20 +41,28 @@ class Parser:
         individual_column = ' RP Name '
         room_column = ' Room '
         # self.personnel comes from config.ini
+        personnel_counts = {}
         for individual in self.personnel: #selects only the rows in the dataframe associated with an individual
             individual_filtered_result = self.column_filter(individual_column, individual)
-            rooms_occupied = np.unique(individual_filtered_result[room_column])
+            rooms_occupied = np_unique(individual_filtered_result[room_column])
             print(f"{individual} has {len(individual_filtered_result)} cages.")
             print("  Located in:")
+            individual_room_data = {}
+            collated_PTA_data = {}
             for room in rooms_occupied: #for a given room, counts the occurences to determine num. cages in each room
                 room_filtered_result = self.column_filter(room_column, room, individual_filtered_result)
-                print(f"\t {room}: {len(room_filtered_result)}")
+                room_count = len(room_filtered_result)
+                print(f"\t {room}: {room_count}")
+                individual_room_data[room] = room_count
             if PTA == True: #for a given billing entry, counts the occurence to determine where funding comes from
                 pta_list = self.pta_assigned_to_lab_personnel(frame=individual_filtered_result)
-                collated_data = self.collate_pta_entries(pta_list, verbose=False)
+                collated_PTA_data = self.collate_pta_entries(pta_list, verbose=False)
                 print("  Paid for by:")
-                for key in collated_data.keys():
-                    print(f"\t {key}: {collated_data[key]} cages")
+                for key in collated_PTA_data.keys():
+                    print(f"\t {key}: {collated_PTA_data[key]} cages")
+
+            personnel_counts[individual] = [individual_room_data, collated_PTA_data]
+        return personnel_counts
 
 
     def locate_genotype(self):
@@ -66,15 +74,15 @@ class Parser:
 
         #narrow down to animals cared for by members of the lab
         lab_personnel_filtered_dataframe = self.filter_by_list('personnel')
-        genotypes = np.unique(lab_personnel_filtered_dataframe[genotype_column])
+        genotypes = np_unique(lab_personnel_filtered_dataframe[genotype_column])
 
         for genotype in genotypes:
             genotype_filtered_result = self.column_filter(genotype_column, genotype, lab_personnel_filtered_dataframe)
-            rooms_occupied = np.unique(genotype_filtered_result[room_column])
+            rooms_occupied = np_unique(genotype_filtered_result[room_column])
             print(f"There are {len(genotype_filtered_result)} cages of {genotype}.")
             for room in rooms_occupied:
                 room_filtered_result = self.column_filter(room_column, room, genotype_filtered_result)
-                responsible_people = np.unique(room_filtered_result[individual_column])
+                responsible_people = np_unique(room_filtered_result[individual_column])
                 print(f"  {room}: {len(room_filtered_result)}")
                 print(f"\t Responsible Personnel: {responsible_people}")
 
@@ -112,7 +120,7 @@ class Parser:
 
         pta_column = ' PTA (%) '
         pta_array = full_data[pta_column]
-        list = np.unique(pta_array)
+        list = np_unique(pta_array)
         output_list = []
         for entry in list:
             if entry.__contains__(','):
@@ -121,7 +129,7 @@ class Parser:
                     output_list.append(self.drop_pta_percentage(item.strip()))
             else:
                 output_list.append(self.drop_pta_percentage(entry.strip()))
-        return np.unique(output_list)
+        return np_unique(output_list)
 
     def drop_pta_percentage(self, item):
         """PTA entries are in the format of ddddddd-ddd-wwwww(ddd|dd)
@@ -141,7 +149,7 @@ class Parser:
 
         pta_column = ' PTA (%) '
         pta_in_lab = mice_in_lab[pta_column]
-        unique_pta_entries = np.unique(pta_in_lab)
+        unique_pta_entries = np_unique(pta_in_lab)
 
         list_of_counts = []
         for pta in unique_pta_entries:
@@ -216,8 +224,8 @@ if __name__ =='__main__':
     #filtered = parser.filter_by_list('personnel')
     #filtered2 = parser2.filter_by_list('personnel')
     #parser.count_by_personnel()
-    parser2.count_by_personnel(PTA=True)
-    parser2.show_pta_info()
+    personnel = parser2.count_by_personnel(PTA=True)
+    total = parser2.show_pta_info()
 
 
 
