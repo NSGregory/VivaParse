@@ -28,6 +28,9 @@ class VivaParse:
         tp.print_personnel_table(self.personnel)
         tp.print_PTA_table(self.PTA)
 
+        # collect total count
+        self.total_animals = sum([self.PTA[key] for key in self.PTA.keys()])
+
         return vscParse
 
 
