@@ -35,7 +35,7 @@ class Parser:
 
         return filtered_data_frame
 
-    def count_by_personnel(self, PTA=False):
+    def count_by_personnel(self, PTA=False, verbose=True):
         """Parses data for each individual in the lab.  The lab personnel included in this function is defined by
         the config.ini. """
         individual_column = ' RP Name '
@@ -45,27 +45,31 @@ class Parser:
         for individual in self.personnel: #selects only the rows in the dataframe associated with an individual
             individual_filtered_result = self.column_filter(individual_column, individual)
             rooms_occupied = np_unique(individual_filtered_result[room_column])
-            print(f"{individual} has {len(individual_filtered_result)} cages.")
-            print("  Located in:")
+            if verbose:
+                print(f"{individual} has {len(individual_filtered_result)} cages.")
+                print("  Located in:")
             individual_room_data = {}
             collated_PTA_data = {}
             for room in rooms_occupied: #for a given room, counts the occurences to determine num. cages in each room
                 room_filtered_result = self.column_filter(room_column, room, individual_filtered_result)
                 room_count = len(room_filtered_result)
-                print(f"\t {room}: {room_count}")
+                if verbose:
+                    print(f"\t {room}: {room_count}")
                 individual_room_data[room] = room_count
             if PTA == True: #for a given billing entry, counts the occurence to determine where funding comes from
                 pta_list = self.pta_assigned_to_lab_personnel(frame=individual_filtered_result)
                 collated_PTA_data = self.collate_pta_entries(pta_list, verbose=False)
-                print("  Paid for by:")
-                for key in collated_PTA_data.keys():
-                    print(f"\t {key}: {collated_PTA_data[key]} cages")
+                if verbose:
+                    print("  Paid for by:")
+                if verbose:
+                    for key in collated_PTA_data.keys():
+                        print(f"\t {key}: {collated_PTA_data[key]} cages")
 
             personnel_counts[individual] = [individual_room_data, collated_PTA_data]
         return personnel_counts
 
 
-    def locate_genotype(self):
+    def locate_genotype(self, verbose=True):
         """Gives location of each genotype belonging to the lab and the people responsible at that location"""
         full_data = self.data
         individual_column = ' RP Name '
@@ -79,12 +83,14 @@ class Parser:
         for genotype in genotypes:
             genotype_filtered_result = self.column_filter(genotype_column, genotype, lab_personnel_filtered_dataframe)
             rooms_occupied = np_unique(genotype_filtered_result[room_column])
-            print(f"There are {len(genotype_filtered_result)} cages of {genotype}.")
+            if verbose:
+                print(f"There are {len(genotype_filtered_result)} cages of {genotype}.")
             for room in rooms_occupied:
                 room_filtered_result = self.column_filter(room_column, room, genotype_filtered_result)
                 responsible_people = np_unique(room_filtered_result[individual_column])
-                print(f"  {room}: {len(room_filtered_result)}")
-                print(f"\t Responsible Personnel: {responsible_people}")
+                if verbose:
+                    print(f"  {room}: {len(room_filtered_result)}")
+                    print(f"\t Responsible Personnel: {responsible_people}")
 
 
     def column_filter(self, column, filter, frame = None):
@@ -207,9 +213,9 @@ class Parser:
         else:
             return name
 
-    def show_pta_info(self):
+    def show_pta_info(self, verbose=True):
         """Shorthand method for displaying the PTA info"""
-        return self.collate_pta_entries(self.pta_assigned_to_lab_personnel())
+        return self.collate_pta_entries(self.pta_assigned_to_lab_personnel(), verbose=verbose)
 
 
 

@@ -1,6 +1,6 @@
 from rich.console import Console
 from rich.table import Table
-from rich.table import Column
+#from rich.table import Column # todo: candidate for deletion
 from rich import box
 
 class TablePrinter():
@@ -29,9 +29,18 @@ class TablePrinter():
 
         return renderable_personnel_data
 
+    def format_PTA_data_renderable(self, PTA_data):
+        renderable_PTA_data = []
+        for PTA in PTA_data.keys():
+            account = PTA
+            number_of_mice = PTA_data[account]
+            renderable_PTA_data.append([account, str(number_of_mice)])
+
+        return renderable_PTA_data
+
     def print_personnel_table(self, personnel_data):
         """Takes an iterable containing strings that are renderable within the Rich library and prints a table."""
-        table = Table(title="[bold red1]Individual Animal Use[/]", box=box.HEAVY_HEAD, show_lines=True, expand=True)
+        table = Table(title="[bold red1]Individual Animal Use[/]", box=box.HEAVY_HEAD, show_lines=True, expand=False)
         table.add_column("[bold cyan1]Name[/]", justify='center', style ='bold green')
         table.add_column("[bold cyan1]Rooms[/]", justify="center", style='bold green')
         table.add_column("[bold cyan1]PTA[/]", justify='left', style='bold green')
@@ -44,6 +53,20 @@ class TablePrinter():
         console=Console()
         console.print(table)
 
+    def print_PTA_table(self, PTA_data):
+        """Takes an iterable containing strings that are renderable within the Rich library and prints a table.
+        The table format is specific for the PTA-related data."""
+        table = Table(title="[bold gold1] PTA Counts[/]", box=box.HEAVY_HEAD, show_lines=True, expand=False)
+        table.add_column("[bold red1]PTA[/]", justify='center', style='bold cyan')
+        table.add_column("[bold red1]Count[/]", justify='center', style='bold cyan')
+
+        renderable_data = self.format_PTA_data_renderable(PTA_data)
+
+        for entry in renderable_data:
+            table.add_row(entry[0], entry[1])
+
+        console=Console()
+        console.print(table)
 
     def dict_to_renderable(self, dict):
         """Converts a dict to a string renderable by the rich library.  Assumes that the key of each dict is a label
@@ -73,8 +96,8 @@ if __name__ =='__main__':
 
     #parse through the pandas dataframe to get pertinent information
     parser = Parser(data)
-    personnel = parser.count_by_personnel(PTA=True) #a dict of dicts
-    total = parser.show_pta_info() #a dict of dicts
+    personnel = parser.count_by_personnel(PTA=True, verbose=False) #a dict of dicts
+    total = parser.show_pta_info(verbose=False) #a dict of dicts
 
     #format the parsed data into a neat terminal rendering
     tp = TablePrinter()
